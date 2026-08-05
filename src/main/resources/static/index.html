@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Owens graafspel</title>
+<style>
+  :root{
+    --panel:#2b1c10;
+    --accent:#ffcf3f;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:#0c0a08;
+    font-family:'Trebuchet MS','Segoe UI',Verdana,sans-serif;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  #app{
+    position:relative;
+    width:100vw;height:100vh;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #stage{
+    position:relative;
+    width:min(100vw, 150vh);
+    aspect-ratio:900/600;
+    max-height:100vh;
+  }
+  canvas{
+    display:block;
+    width:100%;height:100%;
+    border-radius:10px;
+    box-shadow:0 0 0 4px #4a2f14, 0 0 40px rgba(0,0,0,0.7);
+    background:#3e2612;
+  }
+
+  /* ---- HUD ---- */
+  #hud{
+    position:absolute;top:0;left:0;right:0;
+    display:flex;justify-content:space-between;align-items:flex-start;
+    padding:10px 16px;
+    pointer-events:none;
+    font-weight:bold;
+    color:#fff;
+    text-shadow:0 2px 3px rgba(0,0,0,0.8);
+  }
+  #hud .box{
+    background:rgba(0,0,0,0.35);
+    border-radius:10px;
+    padding:6px 12px;
+    font-size:clamp(12px,2.2vh,18px);
+    line-height:1.3;
+  }
+  #hearts span{filter:drop-shadow(0 2px 2px rgba(0,0,0,0.8));}
+  #combo{
+    color:var(--accent);
+  }
+
+  /* ---- Overlays ---- */
+  .overlay{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    background:radial-gradient(ellipse at center, rgba(20,12,6,0.92), rgba(5,3,1,0.97));
+    color:#fff;
+    border-radius:10px;
+    padding:20px;
+  }
+  .overlay.hidden{display:none;}
+  .overlay h1{
+    font-size:clamp(28px,6vh,52px);
+    margin:0 0 6px 0;
+    color:var(--accent);
+    text-shadow:3px 3px 0 #7a3d0c, 0 0 20px rgba(255,207,63,0.4);
+    letter-spacing:1px;
+  }
+  .overlay h2{
+    font-size:clamp(20px,4vh,34px);
+    margin:0 0 14px 0;
+    color:#ffb0b0;
+  }
+  .overlay p{
+    font-size:clamp(13px,2.4vh,18px);
+    max-width:520px;
+    margin:4px 0;
+    color:#e8dcc8;
+  }
+  .btn{
+    margin-top:18px;
+    font-size:clamp(16px,3vh,26px);
+    font-weight:bold;
+    color:#3e2612;
+    background:linear-gradient(#ffe37f,var(--accent));
+    border:3px solid #a8650f;
+    border-radius:14px;
+    padding:12px 34px;
+    cursor:pointer;
+    box-shadow:0 6px 0 #a8650f, 0 8px 14px rgba(0,0,0,0.5);
+    transition:transform .08s;
+  }
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #a8650f;}
+  #scoreRow{display:flex;gap:24px;margin-top:10px;flex-wrap:wrap;justify-content:center;}
+  #scoreRow .card{
+    background:rgba(0,0,0,0.3);
+    border-radius:12px;
+    padding:8px 18px;
+    min-width:120px;
+  }
+  #scoreRow .card b{display:block;font-size:clamp(20px,4vh,32px);color:var(--accent);}
+  #newRecord{
+    color:#8dffb0;
+    font-weight:bold;
+    font-size:clamp(14px,2.6vh,20px);
+    margin-top:6px;
+    display:none;
+    animation:pop 0.6s ease infinite alternate;
+  }
+  @keyframes pop{from{transform:scale(1);}to{transform:scale(1.08);}}
+
+  .legend{
+    display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+    margin-top:10px;font-size:clamp(11px,2vh,15px);color:#e8dcc8;
+  }
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;}
+
+  /* ---- Touch controls ---- */
+  #touch{
+    position:absolute;bottom:10px;left:0;right:0;
+    display:none;
+    justify-content:space-between;
+    padding:0 14px;
+    pointer-events:none;
+  }
+  #touch.show{display:flex;}
+  #touch .side{display:flex;gap:10px;pointer-events:auto;}
+  #touch button{
+    width:56px;height:56px;border-radius:50%;
+    background:rgba(255,207,63,0.85);
+    border:2px solid #a8650f;
+    font-size:22px;font-weight:bold;color:#3e2612;
+    touch-action:none;
+  }
+
+  #muteBtn{
+    pointer-events:auto;
+    background:rgba(0,0,0,0.35);
+    color:#fff;border:none;border-radius:8px;
+    padding:6px 10px;font-size:16px;cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="canvas" width="900" height="600"></canvas>
+
+    <div id="hud">
+      <div class="box">
+        Score: <span id="scoreVal">0</span><br>
+        <span id="combo">x1.0</span>
+      </div>
+      <div class="box" id="hearts">❤️❤️❤️</div>
+      <div class="box" style="text-align:right;">
+        Diepte: <span id="depthVal">0</span> m<br>
+        Best: <span id="highVal">0</span>
+      </div>
+    </div>
+
+    <button id="muteBtn" style="position:absolute;bottom:10px;right:10px;">🔊</button>
+
+    <!-- START SCREEN -->
+    <div id="startScreen" class="overlay">
+      <h1>⛏️ Owens Graafspel ⛏️</h1>
+      <p>Graaf zelf je tunnel door de aarde! Volg de <b style="color:#ff5555;">rode stippellijn</b> zo dicht mogelijk voor bonuspunten.<br>
+      Verzamel goud, edelstenen en fossielen, ontwijk de rotsen — en graaf zo diep mogelijk.</p>
+      <div class="legend">
+        <span><span class="swatch" style="background:#ffd93d;"></span>Goud +10</span>
+        <span><span class="swatch" style="background:#7fd6ff;"></span>Edelsteen +25</span>
+        <span><span class="swatch" style="background:#e8d3a0;"></span>Fossiel +75</span>
+        <span><span class="swatch" style="background:#c98a4b;"></span>Mol +50 🛡️</span>
+        <span><span class="swatch" style="background:#7a7a7a;"></span>Rots ⚠️</span>
+      </div>
+      <p>⬅️ ➡️ sturen &nbsp;|&nbsp; ⬆️ sprint (sneller, meer punten) &nbsp;|&nbsp; ⬇️ rustig aan</p>
+      <button class="btn" id="startBtn">START</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="gameOverScreen" class="overlay hidden">
+      <h2>💥 Botsing! Game Over</h2>
+      <div id="newRecord">🏆 NIEUW RECORD! 🏆</div>
+      <div id="scoreRow">
+        <div class="card">Score<b id="finalScore">0</b></div>
+        <div class="card">Diepte<b id="finalDepth">0 m</b></div>
+        <div class="card">Highscore<b id="finalHigh">0</b></div>
+      </div>
+      <button class="btn" id="restartBtn">NOG EEN KEER</button>
+    </div>
+
+    <!-- Touch controls -->
+    <div id="touch">
+      <div class="side">
+        <button id="tLeft">◀</button>
+        <button id="tRight">▶</button>
+      </div>
+      <div class="side">
+        <button id="tDown">▼</button>
+        <button id="tUp">▲</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const CENTER_X = W/2;
+const PLAYER_Y = 165;
+
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rand = (a,b)=>a+Math.random()*(b-a);
+
+/* ---------------- Audio (synth, no assets) ---------------- */
+let actx = null;
+let muted = false;
+function ensureAudio(){
+  if(!actx){
+    try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ actx=null; }
+  }
+}
+function beep(freq, dur, type, vol, delay){
+  if(muted || !actx) return;
+  const t0 = actx.currentTime + (delay||0);
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol||0.15, t0+0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  osc.connect(gain).connect(actx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+function sfxCoin(){ beep(880,0.12,'triangle',0.15); beep(1320,0.10,'triangle',0.1,0.05); }
+function sfxGem(){ beep(660,0.18,'sine',0.18); beep(990,0.16,'sine',0.14,0.06); }
+function sfxFossil(){ beep(440,0.25,'sawtooth',0.12); beep(880,0.2,'sine',0.15,0.08); }
+function sfxMole(){ beep(300,0.3,'square',0.1); beep(600,0.25,'square',0.1,0.1); }
+function sfxHit(){ beep(120,0.35,'sawtooth',0.22); }
+function sfxOver(){ beep(200,0.5,'sawtooth',0.2); beep(140,0.6,'sawtooth',0.18,0.15); }
+
+document.getElementById('muteBtn').addEventListener('click', ()=>{
+  muted = !muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+});
+
+/* ---------------- Difficulty curves ---------------- */
+function pathX(depth){
+  const amp1 = clamp(40 + depth*0.015, 40, 150);
+  const freq1 = clamp(0.0035 + depth*0.0000015, 0.0035, 0.012);
+  const amp2 = clamp(12 + depth*0.008, 12, 55);
+  const freq2 = freq1*2.7 + 0.002;
+  return CENTER_X + Math.sin(depth*freq1)*amp1 + Math.sin(depth*freq2 + 1.7)*amp2;
+}
+function lineTolerance(depth){
+  return clamp(140 - depth*0.006, 55, 140);
+}
+function baseScrollSpeed(depth){
+  return clamp(110 + depth*0.02, 110, 300);
+}
+
+/* ---------------- Biomes ---------------- */
+const BIOMES = [
+  {min:0,     name:'Aarde',          outer:['#6b4423','#3a2210'], inner:['#8a5a2e','#5c3a1a']},
+  {min:1800,  name:'Klei & Stenen',  outer:['#5a5248','#2a271f'], inner:['#786f5e','#4a4438']},
+  {min:4500,  name:'Kristalgrot',    outer:['#182348','#080c1e'], inner:['#2c4270','#161e3c'], sparkle:true},
+  {min:8500,  name:'Fossielenlaag',  outer:['#4a3524','#201509'], inner:['#6b4e34','#372615']},
+  {min:13000, name:'Magmakern',      outer:['#5c1408','#200502'], inner:['#8a2a10','#43110a'], glow:true},
+];
+function biomeAt(depth){
+  let b = BIOMES[0];
+  for(const cand of BIOMES) if(depth>=cand.min) b=cand;
+  return b;
+}
+
+/* ---------------- Game state ---------------- */
+let state = 'start'; // start | playing | gameover
+let game;
+
+function newGame(){
+  return {
+    depth: 0,
+    player: { x: CENTER_X, vx: 0 },
+    lives: 3,
+    score: 0,
+    invincible: 0,
+    hitFlash: 0,
+    shake: 0,
+    spawnTimer: 0.6,
+    items: [],
+    particles: [],
+    ambient: [],
+    trail: [],
+    lastTrailDepth: -999,
+    bladeAngle: 0,
+    boost: false,
+    brake: false,
+    combo: 1,
+    lastBiome: null,
+    biomeMsgTimer: 0,
+  };
+}
+
+/* ---------------- Input ---------------- */
+const keys = {left:false,right:false,up:false,down:false};
+function keyFor(code){
+  if(code==='ArrowLeft'||code==='KeyA') return 'left';
+  if(code==='ArrowRight'||code==='KeyD') return 'right';
+  if(code==='ArrowUp'||code==='KeyW') return 'up';
+  if(code==='ArrowDown'||code==='KeyS') return 'down';
+  return null;
+}
+window.addEventListener('keydown', (e)=>{
+  const k = keyFor(e.code);
+  if(k){ keys[k]=true; e.preventDefault(); }
+  if((e.code==='Space'||e.code==='Enter')){
+    if(state==='start') startGame();
+    else if(state==='gameover') startGame();
+  }
+});
+window.addEventListener('keyup', (e)=>{
+  const k = keyFor(e.code);
+  if(k){ keys[k]=false; e.preventDefault(); }
+});
+
+function bindTouch(id,k){
+  const el = document.getElementById(id);
+  const on = (e)=>{ keys[k]=true; e.preventDefault(); };
+  const off = (e)=>{ keys[k]=false; e.preventDefault(); };
+  el.addEventListener('pointerdown', on);
+  el.addEventListener('pointerup', off);
+  el.addEventListener('pointerleave', off);
+  el.addEventListener('pointercancel', off);
+}
+bindTouch('tLeft','left'); bindTouch('tRight','right');
+bindTouch('tUp','up'); bindTouch('tDown','down');
+if('ontouchstart' in window){ document.getElementById('touch').classList.add('show'); }
+
+/* ---------------- Items ---------------- */
+const ITEM_TYPES = {
+  coin:   { r:10, value:10, color:'#ffd93d', edge:'#b8890f' },
+  gem:    { r:12, value:25, color:'#7fd6ff', edge:'#1f6f96' },
+  fossil: { r:14, value:75, color:'#e8d3a0', edge:'#8a6a3a' },
+  mole:   { r:16, value:50, color:'#c98a4b', edge:'#6b4420', shield:true },
+  rock:   { r:15, value:0,  color:'#8a8a8a', edge:'#4a4a4a', hazard:true },
+};
+
+function spawnItem(){
+  const g = game;
+  const depth = g.depth + 780; // spawns off the bottom, scrolls up to player
+  const hw = lineTolerance(depth);
+  const cx = pathX(depth);
+  const roll = Math.random();
+  const hazardChance = clamp(0.10 + g.depth*0.000012, 0.10, 0.32);
+  let type;
+  if(roll < hazardChance) type='rock';
+  else if(roll < hazardChance + 0.05) type='mole';
+  else if(roll < hazardChance + 0.16) type='fossil';
+  else if(roll < hazardChance + 0.45) type='gem';
+  else type='coin';
+
+  let offset;
+  if(type==='rock'){
+    offset = rand(-hw*0.85, hw*0.85);
+  } else {
+    offset = rand(-hw*0.55, hw*0.55);
+  }
+  g.items.push({type, depth, x:cx+offset, taken:false, bob:Math.random()*Math.PI*2});
+}
+
+/* ---------------- Particles ---------------- */
+function addParticles(x,y,color,count,spread,life){
+  for(let i=0;i<count;i++){
+    game.particles.push({
+      x, y,
+      vx: rand(-spread,spread), vy: rand(-spread*0.6, spread*0.2)-40,
+      life: life||0.6, maxLife: life||0.6,
+      color
+    });
+  }
+}
+
+function spawnDigDebris(x,y,count){
+  for(let i=0;i<count;i++){
+    game.particles.push({
+      x: x+rand(-12,12), y: y+rand(-4,4),
+      vx: rand(-80,80), vy: rand(-110,-20),
+      life: rand(0.35,0.65), maxLife: 0.65,
+      color: Math.random()<0.5 ? '#6b4423' : '#3e2612',
+      chunk: true, rot: rand(0,Math.PI*2), vrot: rand(-9,9), size: rand(2.5,5)
+    });
+  }
+}
+
+/* ---------------- Update ---------------- */
+function update(dt){
+  const g = game;
+  dt = Math.min(dt, 0.033);
+
+  // steering
+  const accel = 950;
+  if(keys.left) g.player.vx -= accel*dt;
+  if(keys.right) g.player.vx += accel*dt;
+  if(!keys.left && !keys.right) g.player.vx *= Math.pow(0.00035, dt);
+  g.player.vx = clamp(g.player.vx, -400, 400);
+  g.player.x += g.player.vx*dt;
+  g.player.x = clamp(g.player.x, 36, W-36);
+
+  // speed factor
+  g.boost = keys.up;
+  g.brake = keys.down;
+  let speedFactor = 1;
+  if(g.boost) speedFactor = 1.55;
+  else if(g.brake) speedFactor = 0.6;
+  const speed = baseScrollSpeed(g.depth) * speedFactor;
+  g.depth += speed*dt;
+
+  g.bladeAngle += dt * (6 + speedFactor*6);
+
+  // digging debris flying off the blade, more when sprinting
+  spawnDigDebris(g.player.x, PLAYER_Y + 32, speedFactor>1.2 ? 3 : 2);
+
+  // record where we've actually dug, so the tunnel is only where we've been
+  if(g.depth - g.lastTrailDepth > 5){
+    g.trail.push({depth: g.depth, x: g.player.x});
+    g.lastTrailDepth = g.depth;
+  }
+  while(g.trail.length && g.trail[0].depth < g.depth - 780) g.trail.shift();
+
+  // accuracy / combo: the red line is a guide, not a wall — following it closely just scores more
+  const centerX = pathX(g.depth);
+  const tol = lineTolerance(g.depth);
+  const offset = g.player.x - centerX;
+  const absOff = Math.abs(offset);
+  const accuracy = clamp(1 - absOff/tol, 0, 1);
+  g.combo = 1 + accuracy*3.5;
+
+  // score
+  g.score += speed*dt*0.14*g.combo;
+
+  // invincibility / damage timers
+  if(g.invincible>0) g.invincible -= dt;
+  if(g.hitFlash>0) g.hitFlash -= dt;
+  if(g.shake>0) g.shake -= dt;
+
+  // spawn items
+  g.spawnTimer -= dt;
+  if(g.spawnTimer <= 0){
+    spawnItem();
+    g.spawnTimer = rand(0.42, 0.85) - clamp(g.depth*0.00001,0,0.25);
+    g.spawnTimer = Math.max(g.spawnTimer, 0.28);
+  }
+
+  // ambient sparkle in crystal biome
+  const biome = biomeAt(g.depth);
+  if(biome.sparkle && Math.random()<0.5){
+    g.ambient.push({x:rand(0,W), y: H+10, vy: rand(-40,-70), life: rand(1,2.4), maxLife:2.4, s: rand(1,3)});
+  }
+  if(biome.name !== g.lastBiome){
+    g.lastBiome = biome.name;
+    g.biomeMsgTimer = 2.6;
+  }
+  if(g.biomeMsgTimer>0) g.biomeMsgTimer -= dt;
+
+  // update items, collisions
+  for(const it of g.items){
+    if(it.taken) continue;
+    const dd = g.depth - it.depth;
+    if(Math.abs(dd) < 22){
+      const def = ITEM_TYPES[it.type];
+      const dx = it.x - g.player.x;
+      if(Math.abs(dx) < def.r + 26){
+        it.taken = true;
+        if(def.hazard){
+          if(g.invincible<=0){
+            g.lives -= 1;
+            g.invincible = 1.6;
+            g.hitFlash = 0.35;
+            g.shake = 0.5;
+            addParticles(it.x, PLAYER_Y, '#c0392b', 20, 170, 0.6);
+            sfxHit();
+            if(g.lives<=0){ endGame(); return; }
+          } else {
+            addParticles(it.x, PLAYER_Y, '#8a8a8a', 8, 100, 0.4);
+          }
+        } else {
+          g.score += Math.round(def.value * g.combo);
+          addParticles(it.x, PLAYER_Y, def.color, 14, 130, 0.55);
+          if(def.shield){ g.invincible = Math.max(g.invincible, 3); }
+          if(it.type==='coin') sfxCoin();
+          else if(it.type==='gem') sfxGem();
+          else if(it.type==='fossil') sfxFossil();
+          else if(it.type==='mole') sfxMole();
+        }
+      }
+    }
+  }
+  g.items = g.items.filter(it => !it.taken && (g.depth - it.depth) < 250);
+
+  // particles
+  for(const p of g.particles){
+    p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 260*dt;
+    if(p.chunk) p.rot += p.vrot*dt;
+    p.life -= dt;
+  }
+  game.particles = game.particles.filter(p=>p.life>0);
+
+  for(const a of g.ambient){
+    a.y += a.vy*dt; a.life -= dt;
+  }
+  game.ambient = game.ambient.filter(a=>a.life>0);
+
+  updateHUD();
+}
+
+/* ---------------- Drawing ---------------- */
+function drawBackground(){
+  const g = game;
+  const biome = biomeAt(g.depth);
+  const outer = biome.outer, inner = biome.inner;
+
+  // solid, undug earth everywhere — nothing is carved out until you actually drive through it
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0, outer[0]);
+  grad.addColorStop(1, outer[1]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // the dug tunnel: only exists where the player has actually driven (trail is world-space, depth <= current)
+  if(g.trail.length > 1){
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 78;
+    ctx.strokeStyle = inner[0];
+    ctx.beginPath();
+    let started = false;
+    for(const pt of g.trail){
+      const screenY = PLAYER_Y + (pt.depth - g.depth);
+      if(screenY < -60) continue;
+      if(!started){ ctx.moveTo(pt.x, screenY); started = true; }
+      else ctx.lineTo(pt.x, screenY);
+    }
+    ctx.lineTo(g.player.x, PLAYER_Y);
+    ctx.stroke();
+    ctx.lineWidth = 78;
+    ctx.strokeStyle = inner[1];
+    ctx.globalAlpha = 0.35;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if(biome.glow){
+    const glowGrad = ctx.createRadialGradient(CENTER_X,H*0.5,20,CENTER_X,H*0.5,H*0.7);
+    glowGrad.addColorStop(0,'rgba(255,120,40,0.18)');
+    glowGrad.addColorStop(1,'rgba(255,120,40,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  // red dashed guide line — shows the way, doesn't block you
+  ctx.save();
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#ff2d2d';
+  ctx.shadowColor = '#ff0000';
+  ctx.shadowBlur = 10;
+  ctx.setLineDash([16,14]);
+  ctx.lineDashOffset = -g.depth;
+  ctx.beginPath();
+  for(let y=0;y<=H;y+=6){
+    const depth = g.depth + (y - PLAYER_Y);
+    const cx = pathX(depth);
+    if(y===0) ctx.moveTo(cx,y); else ctx.lineTo(cx,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // ambient sparkles
+  if(biome.sparkle){
+    for(const a of g.ambient){
+      ctx.globalAlpha = clamp(a.life/a.maxLife,0,1)*0.9;
+      ctx.fillStyle = '#bfe0ff';
+      ctx.beginPath();
+      ctx.arc(a.x,a.y,a.s,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawItem(it){
+  const def = ITEM_TYPES[it.type];
+  const screenY = PLAYER_Y + (it.depth - game.depth);
+  if(screenY < -30 || screenY > H+30) return;
+  const bob = Math.sin(performance.now()/300 + it.bob)*3;
+  const x = it.x, y = screenY + bob;
+
+  ctx.save();
+  ctx.translate(x,y);
+  if(it.type==='coin'){
+    ctx.fillStyle = def.color; ctx.strokeStyle = def.edge; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(0,0,def.r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = def.edge; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('€',0,1);
+  } else if(it.type==='gem'){
+    ctx.fillStyle = def.color; ctx.strokeStyle = def.edge; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(0,-def.r); ctx.lineTo(def.r*0.8,0); ctx.lineTo(0,def.r); ctx.lineTo(-def.r*0.8,0);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if(it.type==='fossil'){
+    ctx.fillStyle = def.color; ctx.strokeStyle = def.edge; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(-5,0,7,0,Math.PI*2); ctx.arc(5,0,7,0,Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-9,0); ctx.lineTo(9,0); ctx.stroke();
+  } else if(it.type==='mole'){
+    ctx.fillStyle = def.color; ctx.strokeStyle = def.edge; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(0,0,def.r,def.r*0.8,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#2a1a0a';
+    ctx.beginPath(); ctx.arc(-5,-3,2.2,0,Math.PI*2); ctx.arc(5,-3,2.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e08a5a';
+    ctx.beginPath(); ctx.moveTo(0,2); ctx.lineTo(-4,7); ctx.lineTo(4,7); ctx.closePath(); ctx.fill();
+  } else if(it.type==='rock'){
+    ctx.fillStyle = def.color; ctx.strokeStyle = def.edge; ctx.lineWidth=2;
+    ctx.beginPath();
+    const r = def.r;
+    ctx.moveTo(-r,0); ctx.lineTo(-r*0.5,-r); ctx.lineTo(r*0.4,-r*0.8);
+    ctx.lineTo(r,-r*0.1); ctx.lineTo(r*0.6,r*0.9); ctx.lineTo(-r*0.4,r);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPlayer(){
+  const g = game;
+  let x = g.player.x, y = PLAYER_Y;
+  if(g.shake>0){
+    x += rand(-6,6)*(g.shake/0.4);
+    y += rand(-4,4)*(g.shake/0.4);
+  }
+  const flashing = g.invincible>0 && Math.floor(performance.now()/90)%2===0;
+  ctx.save();
+  ctx.translate(x,y);
+  const lean = clamp(g.player.vx/400, -1,1)*0.18;
+  ctx.rotate(lean);
+  if(flashing) ctx.globalAlpha = 0.4;
+
+  // spinning blade wheel (front = below, digging downward)
+  ctx.save();
+  ctx.translate(0, 30);
+  ctx.rotate(g.bladeAngle);
+  ctx.fillStyle = '#9aa0a6';
+  ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#e63946';
+  for(let i=0;i<6;i++){
+    const a = (Math.PI*2/6)*i;
+    ctx.save();
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(0,-4);
+    ctx.lineTo(22,0);
+    ctx.lineTo(0,4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = '#5c5c5c';
+  ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // cab body
+  ctx.fillStyle = '#ffb703';
+  ctx.strokeStyle = '#a8650f';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-26,16);
+  ctx.lineTo(-22,-22);
+  ctx.quadraticCurveTo(0,-32, 22,-22);
+  ctx.lineTo(26,16);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // window
+  ctx.fillStyle = '#8ecae6';
+  ctx.strokeStyle = '#264653';
+  ctx.beginPath();
+  ctx.ellipse(0,-10,13,10,0,0,Math.PI*2);
+  ctx.fill(); ctx.stroke();
+
+  // little exhaust / antenna
+  ctx.strokeStyle = '#a8650f';
+  ctx.beginPath(); ctx.moveTo(18,-22); ctx.lineTo(20,-32); ctx.stroke();
+  ctx.fillStyle = '#e63946';
+  ctx.beginPath(); ctx.arc(20,-33,2.5,0,Math.PI*2); ctx.fill();
+
+  // side tracks
+  ctx.fillStyle = '#3a3a3a';
+  ctx.fillRect(-30,-2,10,20);
+  ctx.fillRect(20,-2,10,20);
+
+  if(g.invincible>0 && !flashing){
+    ctx.globalAlpha=1;
+    ctx.strokeStyle='rgba(126,255,180,0.85)';
+    ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(0,-4,42,0,Math.PI*2); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawParticles(){
+  for(const p of game.particles){
+    ctx.globalAlpha = clamp(p.life/p.maxLife,0,1);
+    ctx.fillStyle = p.color;
+    if(p.chunk){
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.fillRect(-p.size,-p.size,p.size*2,p.size*2);
+      ctx.restore();
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawHitFlash(){
+  if(game.hitFlash>0){
+    ctx.fillStyle = `rgba(220,40,40,${clamp(game.hitFlash/0.35,0,1)*0.35})`;
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+function drawBiomeBanner(){
+  const g = game;
+  if(g.biomeMsgTimer>0){
+    const a = clamp(g.biomeMsgTimer/2.6,0,1);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    const txt = biomeAt(g.depth).name;
+    ctx.font = 'bold 26px sans-serif';
+    const wtxt = ctx.measureText(txt).width;
+    ctx.fillRect(W/2 - wtxt/2 - 16, H*0.32-24, wtxt+32, 44);
+    ctx.fillStyle = '#ffe37f';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(txt, W/2, H*0.32);
+    ctx.restore();
+  }
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+  if(state==='playing'){
+    drawBackground();
+    for(const it of game.items) drawItem(it);
+    drawParticles();
+    drawPlayer();
+    drawHitFlash();
+    drawBiomeBanner();
+  }
+}
+
+/* ---------------- HUD ---------------- */
+const scoreVal = document.getElementById('scoreVal');
+const comboVal = document.getElementById('combo');
+const heartsEl = document.getElementById('hearts');
+const depthVal = document.getElementById('depthVal');
+const highVal = document.getElementById('highVal');
+
+let highscore = parseInt(localStorage.getItem('diepgraver_highscore')||'0',10);
+highVal.textContent = highscore;
+
+function updateHUD(){
+  const g = game;
+  scoreVal.textContent = Math.floor(g.score);
+  comboVal.textContent = 'x' + g.combo.toFixed(1);
+  let hearts = '';
+  for(let i=0;i<3;i++) hearts += (i < g.lives) ? '❤️' : '🖤';
+  heartsEl.textContent = hearts;
+  depthVal.textContent = Math.floor(g.depth/60);
+  highVal.textContent = Math.max(highscore, Math.floor(g.score));
+}
+
+/* ---------------- Game flow ---------------- */
+const startScreen = document.getElementById('startScreen');
+const gameOverScreen = document.getElementById('gameOverScreen');
+
+function startGame(){
+  ensureAudio();
+  if(actx && actx.state==='suspended') actx.resume();
+  game = newGame();
+  state = 'playing';
+  startScreen.classList.add('hidden');
+  gameOverScreen.classList.add('hidden');
+}
+
+function endGame(){
+  state = 'gameover';
+  sfxOver();
+  const finalScore = Math.floor(game.score);
+  const isRecord = finalScore > highscore;
+  if(isRecord){
+    highscore = finalScore;
+    localStorage.setItem('diepgraver_highscore', String(highscore));
+  }
+  document.getElementById('finalScore').textContent = finalScore;
+  document.getElementById('finalDepth').textContent = Math.floor(game.depth/60) + ' m';
+  document.getElementById('finalHigh').textContent = highscore;
+  document.getElementById('newRecord').style.display = isRecord ? 'block' : 'none';
+  gameOverScreen.classList.remove('hidden');
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+
+/* ---------------- Main loop ---------------- */
+let lastT = performance.now();
+function loop(t){
+  const dt = (t - lastT)/1000;
+  lastT = t;
+  if(state==='playing') update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
