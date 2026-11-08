@@ -185,6 +185,10 @@
   .pKicker{margin:0;font-family:var(--display);font-size:calc(16*var(--u));letter-spacing:.12em;color:var(--crystal);}
   .pHint{margin:0;color:var(--muted);font-size:calc(15*var(--u));}
   .sum{margin:0;font-family:var(--display);font-size:calc(64*var(--u));line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .sum.long{font-size:calc(48*var(--u));}
+  .sum.xlong{font-size:calc(38*var(--u));}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;font-size:.62em;line-height:1.05;vertical-align:middle;margin:0 .12em;}
+  .frac .n{border-bottom:.09em solid currentColor;padding:0 .12em;}
   .sum .qm{color:var(--magma);display:inline-block;min-width:1.1em;}
   .sum .qm.got{color:var(--crystal);animation:pop .5s ease;}
   @keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
@@ -197,11 +201,11 @@
   .frame .dot:nth-child(10n+5){margin-right:calc(8*var(--u));}
   .group{display:flex;flex-wrap:wrap;gap:calc(3*var(--u));padding:calc(5*var(--u));border:2px solid rgba(85,227,240,.5);border-radius:calc(10*var(--u));max-width:calc(80*var(--u));}
   .group .dot{width:calc(12*var(--u));height:calc(12*var(--u));}
-  .aidText{font-weight:800;font-size:calc(20*var(--u));color:var(--ink);}
+  .aidText{font-weight:800;font-size:calc(19*var(--u));color:var(--ink);background:rgba(85,227,240,.12);border:1px dashed rgba(85,227,240,.6);border-radius:calc(10*var(--u));padding:calc(6*var(--u)) calc(12*var(--u));max-width:calc(560*var(--u));}
   .answers{display:flex;gap:calc(18*var(--u));justify-content:center;margin-top:calc(4*var(--u));}
   .ans{
     font-family:var(--display);font-size:calc(40*var(--u));
-    width:calc(110*var(--u));height:calc(90*var(--u));
+    min-width:calc(110*var(--u));height:calc(90*var(--u));padding:0 calc(16*var(--u));
     color:#2a0d06;background:linear-gradient(#ffe08a, var(--magma) 60%, #f08a28);
     border:none;border-radius:calc(16*var(--u));cursor:pointer;
     box-shadow:0 calc(6*var(--u)) 0 #8a3a10;
@@ -209,6 +213,7 @@
   }
   .ans:hover:not(:disabled){transform:translateY(calc(-3*var(--u)));}
   .ans:focus-visible{outline:3px solid var(--crystal);outline-offset:3px;}
+  .ans.wide{font-size:calc(28*var(--u));}
   .ans .k{display:block;font-family:var(--body);font-size:calc(12*var(--u));font-weight:800;opacity:.6;margin-top:calc(-4*var(--u));}
   .ans.wrong{background:#4a3a40;color:#a08c92;box-shadow:0 calc(3*var(--u)) 0 #2a1e24;animation:nope .35s;}
   .ans.right{background:linear-gradient(#cffbff,var(--crystal));box-shadow:0 calc(6*var(--u)) 0 #1f8ea0, 0 0 calc(30*var(--u)) var(--crystal);}
@@ -218,6 +223,8 @@
   .speak{font:inherit;font-weight:800;font-size:calc(13*var(--u));color:var(--ink);background:rgba(43,29,34,.9);border:1px solid rgba(224,180,92,.4);border-radius:999px;padding:calc(4*var(--u)) calc(12*var(--u));cursor:pointer;}
   .mathPick{display:flex;align-items:center;gap:calc(8*var(--u));flex-wrap:wrap;justify-content:center;font-weight:800;font-size:calc(14*var(--u));color:var(--muted);}
   .mp{font:inherit;color:var(--ink);background:rgba(43,29,34,.85);border:1px solid rgba(224,180,92,.35);border-radius:999px;padding:calc(5*var(--u)) calc(14*var(--u));cursor:pointer;}
+  .mathWrap{display:flex;flex-direction:column;align-items:center;gap:calc(4*var(--u));}
+  #groepInfo{margin:0;font-size:calc(13*var(--u));color:var(--muted);min-height:1.2em;}
   .mp[aria-checked="true"]{background:var(--crystal);color:#0d2a30;border-color:var(--crystal);}
   .mp:focus-visible{outline:2px solid var(--crystal);outline-offset:2px;}
   .star{color:var(--magma);}
@@ -262,17 +269,23 @@
         <canvas id="heroPreview" width="300" height="340" aria-label="De speerridder"></canvas>
         <div class="levels" id="levelList"></div>
       </div>
-      <div class="mathPick" role="radiogroup" aria-label="Soort sommen">
-        <span>Sommen:</span>
-        <button class="mp" role="radio" data-m="10" id="mp10">Tot 10</button>
-        <button class="mp" role="radio" data-m="20" id="mp20">Tot 20</button>
-        <button class="mp" role="radio" data-m="x" id="mpx">Tafels</button>
+      <div class="mathWrap">
+        <div class="mathPick" role="radiogroup" aria-label="Sommen voor groep">
+          <span>Sommen voor</span>
+          <button class="mp" role="radio" data-g="3" id="g3">Groep 3</button>
+          <button class="mp" role="radio" data-g="4" id="g4">4</button>
+          <button class="mp" role="radio" data-g="5" id="g5">5</button>
+          <button class="mp" role="radio" data-g="6" id="g6">6</button>
+          <button class="mp" role="radio" data-g="7" id="g7">7</button>
+          <button class="mp" role="radio" data-g="8" id="g8">8</button>
+        </div>
+        <p id="groepInfo"></p>
       </div>
       <div class="keys">
         <span><kbd>←</kbd> <kbd>→</kbd> lopen</span>
         <span><kbd>↑</kbd> / <kbd>spatie</kbd> springen</span>
         <span><kbd>shift</kbd> / <kbd>X</kbd> speerstoot</span>
-        <span>sommen: klik of druk <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>
+        <span>antwoord: klik of <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>
         <span><kbd>esc</kbd> pauze</span>
       </div>
     </div>
@@ -629,8 +642,10 @@ function buildLevel(def){
 
 /* ================= save ================= */
 const SAVE_KEY = 'owen-lavaparkour-v1';
-let save = {unlocked:1, best:{}, math:'20', genMax:1};
+let save = {unlocked:1, best:{}, groep:5, genMax:1};
 try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if(s && typeof s==='object') save = Object.assign(save, s); }catch(e){}
+if(!save.groep){ save.groep = save.math==='10' ? 3 : save.math ? 4 : 5; }
+save.groep = Math.max(3, Math.min(8, Number(save.groep)||5));
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
 /* ================= audio ================= */
@@ -1215,52 +1230,175 @@ const $ = id => document.getElementById(id);
 const ri = (a,b) => a + Math.floor(Math.random()*(b-a+1));
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 let lastQ = '';
-function makeQuestion(mode){
-  let a=1,b=1,op='+',ans=2;
-  for(let tries=0;tries<30;tries++){
-    if(mode==='x'){
-      a = [1,2,3,4,5,10][ri(0,5)]; b = ri(1,10); op='×'; ans=a*b;
-      if(Math.random()<0.5){ const t=a; a=b; b=t; }
-    } else {
-      const max = mode==='10' ? 10 : 20;
-      if(Math.random() < (mode==='10' ? 0.65 : 0.55)){
-        op='+'; a=ri(1,max-1); b=ri(1,max-a);
-        if(mode==='20' && a+b<8) continue;
-        ans=a+b;
-      } else {
-        op='−'; a=ri(mode==='10'?2:6, max); b=ri(1, mode==='10' ? a : Math.min(a,12)); ans=a-b;
-      }
-    }
-    const key = a+op+b;
-    if(key!==lastQ){ lastQ=key; break; }
-  }
+const GROEP_INFO = {
+  3:'Plus en min tot 10',
+  4:'Tot 20, tientallen en de tafels van 1, 2, 5 en 10',
+  5:'Tot 100, alle tafels en deelsommen',
+  6:'Tot 1000, keersommen en delen',
+  7:'Tot 10.000, breuken en kommagetallen',
+  8:'Procenten, breuken, kommagetallen en voorrangsregels'
+};
+const GROEP_MIX = {
+  3:[['add10',55],['sub10',45]],
+  4:[['add20',30],['sub20',25],['tafelLaag',25],['tens',20]],
+  5:[['add100',25],['sub100',20],['tafel',30],['deel',15],['x10',10]],
+  6:[['add1000',20],['sub1000',15],['x2d1d',20],['deel2',15],['tafelHoog',20],['x10',10]],
+  7:[['add10000',15],['sub10000',15],['x2d2d',20],['deel3',15],['breuk',20],['komma1',15]],
+  8:[['procent',20],['komma2',20],['kommax',15],['breuk2',15],['volgorde',15],['deel3',15]]
+};
+function fmtNum(v, scale){
+  if(!scale || scale===1) return String(v);
+  const neg = v<0; v = Math.abs(v);
+  const whole = Math.floor(v/scale), rest = v % scale;
+  let r = String(whole);
+  if(rest){ let d = String(rest).padStart(String(scale).length-1,'0').replace(/0+$/,''); r += ','+d; }
+  return (neg?'-':'')+r;
+}
+const tens = n => n - n%10, hund = n => n - n%100, thou = n => n - n%1000;
+function frac(n,d){ return '<span class="frac"><span class="n">'+n+'</span><span>'+d+'</span></span>'; }
+function pickW(list){ let tot=0; for(const x of list) tot+=x[1]; let r=Math.random()*tot; for(const x of list){ r-=x[1]; if(r<0) return x[0]; } return list[0][0]; }
+function mkChoices(ans, deltas, scale){
   const set = new Set([ans]);
-  const cands = shuffle([ans+1, ans-1, ans+2, ans-2]);
-  if(op==='×') cands.unshift(...shuffle([ans+Math.min(a,b), ans-Math.min(a,b)]));
-  else if(ans>=10) cands.push(ans-10);
-  for(const c of cands){ if(set.size>=3) break; if(c>=0) set.add(c); }
-  for(let n=3; set.size<3; n++) set.add(ans+n);
-  return {a, b, op, ans, choices:shuffle([...set])};
+  for(const d of shuffle(deltas.slice())){ if(set.size>=3) break; const c = ans+d; if(c>=0 && c!==ans) set.add(c); }
+  const unit = 1;
+  for(let n=1; set.size<3; n++){ if(ans-n*unit>=0 && Math.random()<0.5) set.add(ans-n*unit); else set.add(ans+n*unit); }
+  return shuffle([...set]);
+}
+function Q(plain, html, ans, deltas, aid, say, scale){
+  scale = scale||1;
+  return {plain, html, ans, scale, choices:mkChoices(ans, deltas, scale), aid, say};
+}
+function sayNum(v, scale){ return fmtNum(v, scale); }
+function plusMin(a, op, b, aid){
+  const ans = op==='+' ? a+b : a-b;
+  const big = Math.max(a,b,ans);
+  const d = big>=1000 ? [1000,-1000,100,-100,10,-10] : big>=100 ? [100,-100,10,-10,1,-1] : big>20 ? [10,-10,1,-1,2,-2] : [1,-1,2,-2];
+  return Q(a+' '+op+' '+b, a+' '+op+' '+b, ans, d, aid, 'Hoeveel is '+a+(op==='+'?' plus ':' min ')+b+'?');
+}
+function genKind(kind){
+  switch(kind){
+    case 'add10': { const a=ri(1,9), b=ri(1,10-a); return plusMin(a,'+',b,{kind:'dots',a,b,op:'+'}); }
+    case 'sub10': { const a=ri(2,10), b=ri(1,a); return plusMin(a,'−',b,{kind:'dots',a,b,op:'−'}); }
+    case 'add20': { let a,b; do{ a=ri(2,15); b=ri(1,20-a); }while(a+b<8); return plusMin(a,'+',b,{kind:'dots',a,b,op:'+'}); }
+    case 'sub20': { const a=ri(6,20), b=ri(1,Math.min(a,12)); return plusMin(a,'−',b,{kind:'dots',a,b,op:'−'}); }
+    case 'tens': {
+      if(Math.random()<0.5){ const x=ri(1,8), y=ri(1,9-x); return plusMin(x*10,'+',y*10,{kind:'text',text:x+' tientallen + '+y+' tientallen = '+(x+y)+' tientallen'}); }
+      const x=ri(3,9), y=ri(1,x); return plusMin(x*10,'−',y*10,{kind:'text',text:x+' tientallen − '+y+' tientallen = '+(x-y)+' tientallen'});
+    }
+    case 'add100': {
+      let a,b; do{ a=ri(12,78); b=ri(11,99-a); }while(Math.random()<0.7 && (a%10)+(b%10)<10);
+      return plusMin(a,'+',b,{kind:'text',text:'Eerst '+a+' + '+tens(b)+' = '+(a+tens(b))+', dan nog + '+(b%10)});
+    }
+    case 'sub100': {
+      let a,b; do{ a=ri(31,99); b=ri(11,a-5); }while(Math.random()<0.7 && (a%10)>=(b%10));
+      return plusMin(a,'−',b,{kind:'text',text:'Eerst '+a+' − '+tens(b)+' = '+(a-tens(b))+', dan nog − '+(b%10)});
+    }
+    case 'add1000': { const a=ri(120,780), b=ri(110,999-a); return plusMin(a,'+',b,{kind:'text',text:'Eerst '+a+' + '+hund(b)+' = '+(a+hund(b))+', dan nog + '+(b%100)}); }
+    case 'sub1000': { const a=ri(300,999), b=ri(110,a-50); return plusMin(a,'−',b,{kind:'text',text:'Eerst '+a+' − '+hund(b)+' = '+(a-hund(b))+', dan nog − '+(b%100)}); }
+    case 'add10000': { const a=ri(1200,6500), b=ri(1100,9999-a); return plusMin(a,'+',b,{kind:'text',text:'Eerst '+a+' + '+thou(b)+' = '+(a+thou(b))+', dan nog + '+(b%1000)}); }
+    case 'sub10000': { const a=ri(3000,9999), b=ri(1100,a-500); return plusMin(a,'−',b,{kind:'text',text:'Eerst '+a+' − '+thou(b)+' = '+(a-thou(b))+', dan nog − '+(b%1000)}); }
+    case 'tafelLaag': case 'tafel': case 'tafelHoog': {
+      let a, b;
+      if(kind==='tafelLaag'){ a=[1,2,5,10][ri(0,3)]; b=ri(1,10); }
+      else if(kind==='tafel'){ a=ri(2,10); b=ri(1,10); }
+      else { a=ri(6,9); b=ri(6,9); }
+      if(Math.random()<0.5){ const t=a; a=b; b=t; }
+      const m=Math.min(a,b), n=Math.max(a,b), ans=a*b;
+      let aid;
+      if(m<=5 && ans<=50) aid={kind:'groups', groups:m, size:n};
+      else if(m<=5) aid={kind:'text', text:m+' × '+n+' = '+Array(m).fill(n).join(' + ')};
+      else aid={kind:'text', text:'5 × '+n+' = '+(5*n)+', en '+(m-5)+' × '+n+' = '+((m-5)*n)+' erbij'};
+      return Q(a+' × '+b, a+' × '+b, ans, [a,-a,b,-b,1,-1,10], aid, 'Hoeveel is '+a+' keer '+b+'?');
+    }
+    case 'deel': { const b=ri(2,10), q=ri(1,10), a=b*q; return Q(a+' : '+b, a+' : '+b, q, [1,-1,2,-2], {kind:'text',text:'Welk getal keer '+b+' is '+a+'?'}, 'Hoeveel is '+a+' gedeeld door '+b+'?'); }
+    case 'x10': {
+      const f = Math.random()<0.6 ? 10 : 100, a = f===10 ? ri(3,99) : ri(2,49), ans=a*f;
+      return Q(a+' × '+f, a+' × '+f, ans, f===10?[a*100-ans, -a*9, 10, -10]:[a*10-ans, a*1000-ans, 100], {kind:'text',text:'Keer '+f+': zet er '+(f===10?'een 0':'twee nullen')+' achter'}, 'Hoeveel is '+a+' keer '+f+'?');
+    }
+    case 'x2d1d': { const a=ri(12,49), b=ri(3,9), ans=a*b; return Q(a+' × '+b, a+' × '+b, ans, [b,-b,10,-10,tens(a)*b-ans], {kind:'text',text:tens(a)+' × '+b+' = '+(tens(a)*b)+', plus '+(a%10)+' × '+b+' = '+((a%10)*b)}, 'Hoeveel is '+a+' keer '+b+'?'); }
+    case 'x2d2d': { const a=ri(11,25), b=ri(11,19), ans=a*b; return Q(a+' × '+b, a+' × '+b, ans, [a,-a,10,-10,a*tens(b)-ans], {kind:'text',text:a+' × '+tens(b)+' = '+(a*tens(b))+', plus '+a+' × '+(b%10)+' = '+(a*(b%10))}, 'Hoeveel is '+a+' keer '+b+'?'); }
+    case 'deel2': case 'deel3': {
+      const b=ri(2,9);
+      const q = kind==='deel2' ? ri(11, Math.floor(99/b)) : ri(21, Math.floor(999/b));
+      const a=b*q, k=Math.floor(q/10)*10, p1=b*k, p2=a-p1;
+      return Q(a+' : '+b, a+' : '+b, q, [1,-1,10,-10,2], {kind:'text',text:p1+' : '+b+' = '+k+', en '+p2+' : '+b+' = '+(q-k)}, 'Hoeveel is '+a+' gedeeld door '+b+'?');
+    }
+    case 'breuk': case 'breuk2': {
+      const opts = kind==='breuk' ? [[1,2],[1,3],[1,4],[1,5],[1,10],[3,4]] : [[2,3],[3,4],[2,5],[3,5],[4,5],[3,10],[5,8]];
+      const [n,d] = opts[ri(0,opts.length-1)];
+      const k = ri(2,12), tot = d*k, ans = n*k;
+      const txt = n===1 ? tot+' : '+d+' = '+k : 'Eerst '+frac(1,d)+' van '+tot+' = '+k+', dan '+n+' × '+k;
+      const deltas = n===1 ? [k*(d>2?1:0)-0, -1, 1, tot-ans].filter(x=>x!==0) : [k-ans, k, -k, 1];
+      return Q(n+'/'+d+' van '+tot, frac(n,d)+' van '+tot, ans, deltas, {kind:'text', html:true, text:txt}, d===2 ? 'Hoeveel is de helft van '+tot+'?' : 'Hoeveel is '+n+' '+({3:'derde',4:'vierde',5:'vijfde',8:'achtste',10:'tiende'}[d])+' van '+tot+'?');
+    }
+    case 'komma1': {
+      const a=ri(11,89), b=ri(11,89);
+      if(Math.random()<0.6 || a<=b){ const A=Math.max(a,b), B=Math.min(a,b); const op = Math.random()<0.6?'+':'−';
+        const x = op==='+'?a:A, y = op==='+'?b:B, ans = op==='+'?x+y:x-y;
+        return Q(fmtNum(x,10)+' '+op+' '+fmtNum(y,10), fmtNum(x,10)+' '+op+' '+fmtNum(y,10), ans, [10,-10,1,-1,2], {kind:'text',text:'Reken zonder komma: '+x+' '+op+' '+y+' = '+ans+'. Zet de komma terug: '+fmtNum(ans,10)}, 'Hoeveel is '+fmtNum(x,10)+(op==='+'?' plus ':' min ')+fmtNum(y,10)+'?', 10); }
+      return Q(fmtNum(a,10)+' − '+fmtNum(b,10), fmtNum(a,10)+' − '+fmtNum(b,10), a-b, [10,-10,1,-1], {kind:'text',text:'Reken zonder komma: '+a+' − '+b+' = '+(a-b)}, 'Hoeveel is '+fmtNum(a,10)+' min '+fmtNum(b,10)+'?', 10);
+    }
+    case 'komma2': {
+      const part = () => ri(1,8)*100 + [0,25,50,75][ri(0,3)];
+      let x=part(), y=part(); const op = Math.random()<0.55 ? '+' : '−';
+      if(op==='−' && y>x){ const t=x; x=y; y=t; }
+      if(op==='−' && x===y) x += 100;
+      const ans = op==='+' ? x+y : x-y;
+      const wx=Math.floor(x/100), wy=Math.floor(y/100);
+      return Q(fmtNum(x,100)+' '+op+' '+fmtNum(y,100), fmtNum(x,100)+' '+op+' '+fmtNum(y,100), ans, [100,-100,25,-25,50,-50,10], {kind:'text',text:'Eerst de hele getallen: '+wx+' '+op+' '+wy+'. Dan de rest: '+fmtNum(x%100,100)+' '+op+' '+fmtNum(y%100,100)}, 'Hoeveel is '+fmtNum(x,100)+(op==='+'?' plus ':' min ')+fmtNum(y,100)+'?', 100);
+    }
+    case 'kommax': {
+      const m10=[5,15,25][ri(0,2)], n=ri(2,12), ans=m10*n;
+      const tip = m10===5 ? '0,5 × '+n+' is de helft van '+n : fmtNum(m10,10)+' × '+n+' = '+Math.floor(m10/10)+' × '+n+' + de helft van '+n;
+      return Q(fmtNum(m10,10)+' × '+n, fmtNum(m10,10)+' × '+n, ans, [10,-10,5,-5,n*10], {kind:'text',text:tip}, 'Hoeveel is '+fmtNum(m10,10)+' keer '+n+'?', 10);
+    }
+    case 'procent': {
+      const p=[10,20,25,50,75][ri(0,4)];
+      const tot = (p===25||p===75) ? 4*ri(2,25) : (p===50 ? 2*ri(5,50) : 10*ri(2,30));
+      const ans = tot*p/100;
+      const others = [10,20,25,50,75].filter(x=>x!==p).map(x=>tot*x/100).filter(v=>Number.isInteger(v)).map(v=>v-ans);
+      const tip = {10:'10% = delen door 10', 20:'20% = 2 × 10%', 25:'25% = een kwart = delen door 4', 50:'50% = de helft', 75:'75% = drie kwart: eerst delen door 4, dan × 3'}[p];
+      return Q(p+'% van '+tot, p+'% van '+tot, ans, others.concat([1,-1]), {kind:'text',text:tip}, 'Hoeveel is '+p+' procent van '+tot+'?');
+    }
+    case 'volgorde': {
+      if(Math.random()<0.5){ const a=ri(2,20), b=ri(2,9), c=ri(2,9), ans=a+b*c, wrong=(a+b)*c;
+        return Q(a+' + '+b+' × '+c, a+' + '+b+' × '+c, ans, [wrong-ans, 1, -1, b], {kind:'text',text:'Eerst keer: '+b+' × '+c+' = '+(b*c)+', dan + '+a}, 'Hoeveel is '+a+' plus '+b+' keer '+c+'?'); }
+      const b=ri(3,9), c=ri(3,9), a=ri(b*c+2, b*c+40), ans=a-b*c, wrong=(a-b)*c;
+      return Q(a+' − '+b+' × '+c, a+' − '+b+' × '+c, ans, [wrong-ans, 1, -1, -b, b], {kind:'text',text:'Eerst keer: '+b+' × '+c+' = '+(b*c)+', dan '+a+' − '+(b*c)}, 'Hoeveel is '+a+' min '+b+' keer '+c+'?');
+    }
+  }
+  return plusMin(2,'+',3,{kind:'dots',a:2,b:3,op:'+'});
+}
+function makeQuestion(groep){
+  let q;
+  for(let tries=0; tries<20; tries++){
+    q = genKind(pickW(GROEP_MIX[groep] || GROEP_MIX[5]));
+    if(q.plain !== lastQ) break;
+  }
+  lastQ = q.plain;
+  return q;
 }
 function dot(cls){ const d=document.createElement('span'); d.className='dot'+(cls?' '+cls:''); return d; }
 function showAid(q){
   const el = $('pAid'); el.innerHTML='';
-  if(q.op==='×'){
-    const groups = Math.min(q.a,q.b), size = Math.max(q.a,q.b);
-    if(groups*size <= 50){
-      for(let i=0;i<groups;i++){ const g=document.createElement('span'); g.className='group'; for(let j=0;j<size;j++) g.appendChild(dot('b')); el.appendChild(g); }
-    }
+  const aid = q.aid; if(!aid) return;
+  if(aid.kind==='groups'){
+    for(let i=0;i<aid.groups;i++){ const g=document.createElement('span'); g.className='group'; for(let j=0;j<aid.size;j++) g.appendChild(dot('b')); el.appendChild(g); }
     const t=document.createElement('span'); t.className='aidText';
-    t.textContent = groups+' groepjes van '+size+':  '+Array(groups).fill(size).join(' + ');
+    t.textContent = aid.groups+' groepjes van '+aid.size+':  '+Array(aid.groups).fill(aid.size).join(' + ');
     el.appendChild(t);
-    return;
+  } else if(aid.kind==='dots'){
+    const fr = document.createElement('div'); fr.className='frame';
+    if(aid.op==='+'){ for(let i=0;i<aid.a;i++) fr.appendChild(dot()); for(let i=0;i<aid.b;i++) fr.appendChild(dot('b')); }
+    else { for(let i=0;i<aid.a;i++) fr.appendChild(dot(i>=aid.a-aid.b ? 'gone' : '')); }
+    el.appendChild(fr);
+  } else {
+    const t=document.createElement('span'); t.className='aidText';
+    if(aid.html) t.innerHTML = 'Tip: '+aid.text; else t.textContent = 'Tip: '+aid.text;
+    el.appendChild(t);
   }
-  const fr = document.createElement('div'); fr.className='frame';
-  if(q.op==='+'){ for(let i=0;i<q.a;i++) fr.appendChild(dot()); for(let i=0;i<q.b;i++) fr.appendChild(dot('b')); }
-  else { for(let i=0;i<q.a;i++) fr.appendChild(dot(i>=q.a-q.b ? 'gone' : '')); }
-  el.appendChild(fr);
 }
-function speakText(q){ return 'Hoeveel is '+q.a+' '+(q.op==='+'?'plus':q.op==='−'?'min':'keer')+' '+q.b+'?'; }
+function speakText(q){ return q.say; }
 function speak(text){
   try{
     if(!window.speechSynthesis) return;
@@ -1274,19 +1412,21 @@ function openPuzzle(kind, ref){
   state = 'puzzle';
   for(const k in keys) keys[k]=false;
   pressed.jump = pressed.dash = false;
-  const q = makeQuestion(save.math);
+  const q = makeQuestion(save.groep);
   puzzle = {kind, ref, q, wrong:0, solved:false};
   $('pKicker').textContent = kind==='gate' ? 'REKENPOORT' : 'LAVASTEEN';
   $('pHint').textContent = kind==='gate' ? 'Los de som op, dan gaat de poort open.' : 'Los de som op, dan zakt de lava een stuk.';
-  $('pSum').innerHTML = q.a+' '+q.op+' '+q.b+' = <span class="qm" id="pQm">?</span>';
+  $('pSum').innerHTML = q.html+' = <span class="qm" id="pQm">?</span>';
+  $('pSum').className = 'sum' + (q.plain.length > 15 ? ' xlong' : q.plain.length > 10 ? ' long' : '');
   $('pMsg').textContent=''; $('pMsg').className='';
   $('pAid').innerHTML='';
-  if(save.math==='10') showAid(q);
+  if(save.groep===3) showAid(q);
+  const wide = q.choices.some(v=>fmtNum(v,q.scale).length>=4);
   const box = $('pAnswers'); box.innerHTML='';
   q.choices.forEach((v,i)=>{
     const b = document.createElement('button');
-    b.className='ans'; b.id='ans'+i;
-    b.innerHTML = v+'<span class="k">'+(i+1)+'</span>';
+    b.className='ans'+(wide?' wide':''); b.id='ans'+i;
+    b.innerHTML = fmtNum(v,q.scale)+'<span class="k">'+(i+1)+'</span>';
     b.addEventListener('click', ()=>answer(b,v));
     box.appendChild(b);
   });
@@ -1300,7 +1440,7 @@ function answer(btn,v){
   if(v===q.ans){
     puzzle.solved = true;
     btn.classList.add('right');
-    const qm = $('pQm'); qm.textContent = q.ans; qm.classList.add('got');
+    const qm = $('pQm'); qm.textContent = fmtNum(q.ans,q.scale); qm.classList.add('got');
     const praise = ['Goed zo!','Super!','Knap gedaan!','Helemaal goed!','Top!'];
     $('pMsg').textContent = praise[ri(0,praise.length-1)]+(puzzle.wrong===0?' ★':''); $('pMsg').className='good';
     sumsDone++; if(puzzle.wrong===0) sumsRight++;
@@ -1310,8 +1450,8 @@ function answer(btn,v){
   } else {
     puzzle.wrong++;
     btn.disabled = true; btn.classList.add('wrong');
-    $('pMsg').textContent = puzzle.wrong===1 ? 'Bijna! Tel de bolletjes maar mee.' : 'Nog één over. Jij kan het!';
-    if(q.op==='×' && puzzle.wrong===1) $('pMsg').textContent = 'Bijna! Kijk naar de groepjes.';
+    const k = q.aid ? q.aid.kind : 'text';
+    $('pMsg').textContent = puzzle.wrong===1 ? (k==='dots' ? 'Bijna! Tel de bolletjes maar mee.' : k==='groups' ? 'Bijna! Kijk naar de groepjes.' : 'Bijna! Kijk naar de tip.') : 'Nog één over. Jij kan het!';
     $('pMsg').className='';
     showAid(q);
     sfx.wrong();
@@ -1356,9 +1496,10 @@ $('pSpeak').addEventListener('click', ()=>{ if(puzzle) speak(speakText(puzzle.q)
 let floatText = null;
 
 function syncMathPick(){
-  for(const b of document.querySelectorAll('.mp')) b.setAttribute('aria-checked', String(b.dataset.m===save.math));
+  for(const b of document.querySelectorAll('.mp')) b.setAttribute('aria-checked', String(Number(b.dataset.g)===save.groep));
+  $('groepInfo').textContent = 'Groep '+save.groep+': '+GROEP_INFO[save.groep];
 }
-for(const b of document.querySelectorAll('.mp')) b.addEventListener('click', ()=>{ save.math = b.dataset.m; persist(); syncMathPick(); });
+for(const b of document.querySelectorAll('.mp')) b.addEventListener('click', ()=>{ save.groep = Number(b.dataset.g); persist(); syncMathPick(); });
 syncMathPick();
 
 /* ================= hero drawing ================= */
