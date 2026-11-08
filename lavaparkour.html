@@ -1408,14 +1408,20 @@ function speak(text){
     window.speechSynthesis.speak(u);
   }catch(e){}
 }
+const SUMS_PER_PUZZLE = 2;
 function openPuzzle(kind, ref){
   state = 'puzzle';
   for(const k in keys) keys[k]=false;
   pressed.jump = pressed.dash = false;
+  puzzle = {kind, ref, q:null, wrong:0, solved:false, step:1, steps:SUMS_PER_PUZZLE};
+  $('pHint').textContent = kind==='gate' ? 'Los de '+SUMS_PER_PUZZLE+' sommen op, dan gaat de poort open.' : 'Los de '+SUMS_PER_PUZZLE+' sommen op, dan zakt de lava een stuk.';
+  showOverlay('puzzle');
+  nextQuestion();
+}
+function nextQuestion(){
   const q = makeQuestion(save.groep);
-  puzzle = {kind, ref, q, wrong:0, solved:false};
-  $('pKicker').textContent = kind==='gate' ? 'REKENPOORT' : 'LAVASTEEN';
-  $('pHint').textContent = kind==='gate' ? 'Los de som op, dan gaat de poort open.' : 'Los de som op, dan zakt de lava een stuk.';
+  puzzle.q = q; puzzle.wrong = 0; puzzle.solved = false;
+  $('pKicker').textContent = (puzzle.kind==='gate' ? 'REKENPOORT' : 'LAVASTEEN') + ' · SOM ' + puzzle.step + ' VAN ' + puzzle.steps;
   $('pSum').innerHTML = q.html+' = <span class="qm" id="pQm">?</span>';
   $('pSum').className = 'sum' + (q.plain.length > 15 ? ' xlong' : q.plain.length > 10 ? ' long' : '');
   $('pMsg').textContent=''; $('pMsg').className='';
@@ -1430,7 +1436,6 @@ function openPuzzle(kind, ref){
     b.addEventListener('click', ()=>answer(b,v));
     box.appendChild(b);
   });
-  showOverlay('puzzle');
   sfx.ask();
   setTimeout(()=>{ const b=$('ans0'); if(b) b.focus({preventScroll:true}); }, 30);
 }
@@ -1446,7 +1451,12 @@ function answer(btn,v){
     sumsDone++; if(puzzle.wrong===0) sumsRight++;
     sfx.right();
     for(const b of $('pAnswers').children) if(b!==btn) b.disabled=true;
-    setTimeout(closePuzzle, 1000);
+    const pz = puzzle;
+    setTimeout(()=>{
+      if(puzzle!==pz || state!=='puzzle') return;
+      if(pz.step < pz.steps){ pz.step++; nextQuestion(); }
+      else closePuzzle();
+    }, 1000);
   } else {
     puzzle.wrong++;
     btn.disabled = true; btn.classList.add('wrong');
